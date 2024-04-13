@@ -1,0 +1,141 @@
+from flask import request
+from flask import Flask, render_template
+from jsonschema import validate, ValidationError
+#from jsonschema.exceptions import ValidationError
+from datetime import datetime#,timedelta
+from os import path
+
+import uuid
+import json
+import os
+import time
+
+app = Flask(__name__)
+
+schema = {
+    "type" : "object",
+    "properties" : {
+        "title" : {"title" : "string"},
+        "message": {"message" : "string"},
+    },
+}
+
+words = {}
+
+
+@app.route('/',methods=['POST','GET'])
+def hillo():
+    data = gettodo()
+    messages=[]
+    for k,v in data.items():
+        titles=[]
+        titles.append(v.get('title'))
+        titles.append(v.get('message'))
+        titles.append(k)
+        messages.append(titles)
+    return render_template('index.html',titles=messages,messages=messages)
+
+@app.route('/todo',methods = ['POST'])
+def todo():
+    dicti={}
+    dicti2={}
+    jsonbu={}
+    now = datetime.now()
+    dt_string = now.strftime("%B %d, %Y %H:%M:%S")
+    if path.isfile("todo.json") is False:
+        pass
+    else:
+        with open("todo.json",'r') as f:
+            if not os.stat("todo.json").st_size == 0:
+                jsonbu.update(json.load(f))
+    try:
+        data = request.json
+        validate(instance=data, schema=schema)
+        print("Validation successful")
+        dicti2.update({"title":data["title"]})
+        dicti2.update({"message":data["message"]})
+        dicti.update({str(uuid.uuid4()):dicti2})
+        dicti2.update({"done": False})
+        dicti2.update({"time": dt_string })
+        jsonbu.update(dicti)
+
+        with open("todo.json",'w') as f:
+            if not os.stat("todo.json").st_size == 0:
+                f.write(",")
+            json.dump(jsonbu, f,
+                        indent=4,
+                        separators=(',',': '))
+        f.close()
+        data = gettodo()
+        messages=[]
+        for k,v in data.items():
+            titles=[]
+            titles.append(v.get('title'))
+            titles.append(v.get('message'))
+            titles.append(k)
+            messages.append(titles)
+        return render_template('index.html',titles=messages,messages=messages)
+    except ValidationError as err:
+        return {"message": f"fuck you bc {err.message}"}
+@app.route('/gettodo',methods = ['GET'])
+def gettodo():
+
+    with open('todo.json', 'r') as file:
+        data = json.load(file)
+
+    now = datetime.now()
+    current = now.strftime("%B %d, %Y %H:%M:%S")
+    print(data)
+   #for k in data.values():
+       #print(k)
+        #rint((k["time"]))
+       #if k["time"] + timedelta(minutes=1) < current:
+            #son.pop(data)
+    file.close()
+    #lines= json.load("todo.json")
+
+    return data
+@app.route('/deletetodo',methods = ['POST','GET'])
+def deletetodo():
+    req = request.json
+    with open('todo.json', 'r') as file:
+        data = json.load(file)
+    for i in data:
+        print(i)
+        print(req["delete"])
+        if i == req["delete"]:
+            print("burdayiiim", i)
+            data.pop(i)
+            break
+    with open('todo.json', 'w') as file:
+        json.dump(data, file, indent=4,separators=(',',': '))
+        print("data bu ",data)
+        file.close()
+        data = gettodo()
+
+    messages=[]
+    for k,v in data.items():
+        titles=[]
+        titles.append(v.get('title'))
+        titles.append(v.get('message'))
+        titles.append(k)
+        messages.append(titles)
+    return render_template('index.html',titles=messages,messages=messages)
+@app.route('/toUppercase',methods = ['POST'])
+def hello():
+  data = request.json
+  try:
+    validate(instance=data, schema=schema)
+    print("Validation successful")
+    words.update({data['word']:data['word'].upper()})
+    data['word'] = data['word'].upper()
+    return data
+  except ValidationError as err:
+    return {"message": f"fuck you bc {err.message}"}
+
+@app.route('/getWords',methods = ['GET'])
+def get_words():
+  return words
+
+if __name__ == "__main__":
+  app.run(port=8080,debug=True)

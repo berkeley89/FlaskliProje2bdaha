@@ -1,0 +1,89 @@
+<!doctype html>
+
+<head><title>Test</title> 
+    <meta charset=utf-8> </head>
+    <body>
+        <h1>ToDo List</h1>
+	<table>
+	<p>
+	<tr>
+	<td>
+	<form action="/my-link/">
+	<label for="Name">Title:</label>
+	<input type="text" id="title" name="Name"></form>
+	<form action="/my-link/">
+	<label for="freeform">Add a Message:</label>
+	<br>
+	
+	<textarea id="freeform" name="freeform" rows="4" cols="50">
+	
+	</textarea>
+	 </form>
+
+	<form name="ajaxform2" id="ajaxform2" method="POST">
+	<button id="adding" onClick="addMessage()" value="Add"> Add</form> </button>
+	</td>
+	</tr>
+	</p>
+	</table>
+<script>
+      function addMessage() {
+		
+		var title= document.getElementById("title").value;
+		var message = document.getElementById("freeform").value;
+
+            const xhr = new XMLHttpRequest();
+
+              const json = {
+"title": title,
+"message": message
+};
+ 
+	    xhr.open("POST", "/todo");
+            xhr.setRequestHeader("Content-Type", 
+                                 "application/json");
+            xhr.send(JSON.stringify(json));
+
+}
+
+    </script>
+	<table>
+	<p>
+	{% for title in messages%}
+	<tr><form name="ajaxform" id="ajaxform" method="POST">
+	<td>{{title[0]}}: {{title[1]}}
+
+
+
+<button id={{title[2]}} onClick="send(this.id)" value={{title[2]}}>Delete</form></button>
+
+       	</td>
+	</tr>
+	{% endfor %}
+	</p>
+	</table>
+
+	
+
+<script>
+        function send(id) {
+
+            const xhr = new XMLHttpRequest();
+
+              const json = {
+                  "delete": id
+                  
+            };
+ 
+            xhr.open("POST", "/deletetodo");
+            xhr.setRequestHeader("Content-Type", 
+                                 "application/json");
+            xhr.send(JSON.stringify(json));
+
+            
+        }
+
+
+    </script>
+  
+    </body>
